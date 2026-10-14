@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TYPING BATTLE RPG</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+            letter-spacing: .2px;
+            background:
+                radial-gradient(circle at 15% 10%, rgba(124, 92, 255, .22), transparent 32%),
+                radial-gradient(circle at 90% 85%, rgba(255, 105, 180, .16), transparent 30%),
+                #0b1020;
+            color: #f8f7ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .game-wrapper {
+            display: flex;
+            gap: 22px;
+            max-width: 1080px;
+            width: min(100%, 1080px);
+            padding: 24px;
+            align-items: stretch;
+        }
+
+        .card {
+            background: linear-gradient(145deg, rgba(28, 35, 66, .96), rgba(18, 22, 43, .98));
+            border: 1px solid rgba(166, 151, 255, .28);
+            padding: 26px;
+            border-radius: 24px;
+            box-shadow: 0 18px 45px rgba(0,0,0,.36), inset 0 1px 0 rgba(255,255,255,.06);
+            flex: 1;
+            text-align: center;
+        }
+
+        .side-panel {
+            background: linear-gradient(160deg, rgba(31, 27, 61, .98), rgba(18, 24, 48, .98));
+            border: 1px solid rgba(255, 139, 204, .22);
+            padding: 22px;
+            border-radius: 24px;
+            width: 290px;
+            box-shadow: 0 18px 45px rgba(0,0,0,.28);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        h1, h2 {
+            margin-top: 0;
+            color: #b8a7ff;
+            text-shadow: 0 0 22px rgba(155, 130, 255, .25);
+        }
+
+        .screen {
+            width: min(100% - 32px, 980px);
+            margin: 28px auto;
+            padding: 28px;
+            box-sizing: border-box;
+            border-radius: 28px;
+            background: linear-gradient(145deg, rgba(28, 35, 66, .97), rgba(18, 22, 43, .99));
+            border: 1px solid rgba(166, 151, 255, .28);
+            box-shadow: 0 22px 60px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
+            text-align: center;
+        }
+        .screen-kicker {
+            color: #8ceaff;
+            letter-spacing: 4px;
+            font-size: .78rem;
+            font-weight: 800;
+        }
+        .screen-title {
+            color: #f5d9ff;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            line-height: 1.1;
+            margin: 12px 0;
+            text-shadow: 0 0 28px rgba(184,167,255,.28);
+        }
+        .screen-subtitle { color: #b7c1e8; margin: 0 auto 24px; }
+        .title-mascots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(12px, 4vw, 36px);
+            margin: 26px 0;
+        }
+        .title-mascot {
+            display: grid;
+            place-items: center;
+            width: clamp(82px, 15vw, 140px);
+            aspect-ratio: 1;
+            border-radius: 30px;
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            background: linear-gradient(145deg, #29234f, #17243f);
+            border: 1px solid rgba(174,234,255,.35);
+            box-shadow: inset 0 0 22px rgba(124,92,255,.2), 0 10px 30px rgba(0,0,0,.25);
+        }
+        .screen-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+        .screen-actions .btn { max-width: 300px; }
+        .btn.secondary {
+            background: rgba(93, 103, 151, .35);
+            color: #e7e8ff;
+            border: 1px solid rgba(184,167,255,.25);
+        }
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+        .character-card {
+            cursor: pointer;
+            border: 2px solid rgba(167,156,255,.18);
+            border-radius: 22px;
+            padding: 18px 12px;
+            background: rgba(8,13,31,.48);
+            color: #f8f7ff;
+            transition: transform .18s ease, border-color .18s ease, background .18s ease;
+        }
+        .character-card:hover { transform: translateY(-4px); border-color: rgba(140,234,255,.65); }
+        .character-card.selected {
+            border-color: #8ceaff;
+            background: linear-gradient(145deg, rgba(124,92,255,.25), rgba(255,143,202,.15));
+            box-shadow: 0 0 24px rgba(140,234,255,.12);
+        }
+        .character-art {
+            display: grid;
+            place-items: center;
+            width: 100px;
+            max-width: 80%;
+            aspect-ratio: 1;
+            margin: 0 auto 12px;
+            border-radius: 28px;
+            font-size: 4rem;
+            background: linear-gradient(145deg, #29234f, #17243f);
+            border: 1px solid rgba(174,234,255,.3);
+        }
+        .character-name { display: block; color: #f5d9ff; font-weight: 900; margin-bottom: 5px; }
+        .character-desc { color: #b7c1e8; font-size: .82rem; }
+        .character-card.admin-only { border-color: rgba(255, 207, 92, .65); background: linear-gradient(135deg, rgba(104, 67, 153, .32), rgba(54, 37, 90, .78)); }
+        .admin-character-tag { display: inline-block; margin-top: 7px; padding: 3px 8px; border-radius: 999px; color: #24162f; background: #ffcf5c; font-size: .72rem; font-weight: 900; }
+        #game-wrapper { display: none; }
+        .admin-entry { margin-top: 16px; opacity: .82; font-size: .9rem; }
+        .admin-panel { text-align: left; }
+        .admin-panel label { display: block; margin: 14px 0 6px; color: #c9d1f3; font-weight: 700; }
+        .admin-panel input, .admin-panel select { box-sizing: border-box; width: 100%; padding: 11px 12px; border-radius: 12px; border: 1px solid rgba(140,234,255,.35); background: #0b1020; color: #fff; font: inherit; }
+        .admin-note { color: #b7c1e8; font-size: .85rem; line-height: 1.6; }
+        .admin-status { color: #8dffcb; min-height: 1.4em; font-weight: 800; }
+        @media (max-width: 900px) { .character-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+        @media (max-width: 650px) {
+            .screen { padding: 22px 16px; margin: 16px auto; }
+            .character-grid { grid-template-columns: 1fr; }
+            .character-card { display: flex; align-items: center; text-align: left; gap: 14px; }
+            .character-art { width: 76px; flex: 0 0 76px; margin: 0; font-size: 3rem; border-radius: 22px; }
+        }
+        .battle-arena {
+            position: relative;
+            overflow: hidden;
+            padding: 22px 18px 18px;
+            margin: 12px 0 18px;
+            border-radius: 22px;
+            background:
+                radial-gradient(ellipse at 50% 100%, rgba(124,92,255,.26), transparent 55%),
+                linear-gradient(180deg, rgba(7,12,32,.92), rgba(20,24,57,.95));
+            border: 1px solid rgba(140,234,255,.25);
+            box-shadow: inset 0 0 34px rgba(124,92,255,.10);
+        }
+        .battle-arena:before {
+            content: "";
+            position: absolute;
+            left: -8%; right: -8%; bottom: 0;
+            height: 42%;
+            background: repeating-linear-gradient(90deg, transparent 0 38px, rgba(140,234,255,.08) 39px 40px),
+                        linear-gradient(0deg, rgba(140,234,255,.12), transparent);
+            transform: perspective(160px) rotateX(24deg);
+            transform-origin: bottom;
+            pointer-events: none;
+        }
+        .arena-topline {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            color: #aeb9e9;
+            font-size: .75rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 14px;
+        }
+        .battle-stage {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 10px;
+            min-height: 150px;
+        }
+        .fighter { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .fighter-avatar {
+            width: clamp(76px, 10vw, 112px);
+            aspect-ratio: 1;
+            display: grid;
+            place-items: center;
+            font-size: clamp(3rem, 6vw, 4.5rem);
+            border-radius: 28px;
+            background: linear-gradient(145deg, rgba(51,43,99,.96), rgba(20,42,73,.96));
+            border: 1px solid rgba(140,234,255,.42);
+            box-shadow: 0 0 26px rgba(124,92,255,.22), inset 0 0 20px rgba(140,234,255,.10);
+            animation: floaty 2.8s ease-in-out infinite;
+        }
+        .fighter.cpu .fighter-avatar {
+            background: linear-gradient(145deg, rgba(94,34,77,.96), rgba(43,29,73,.96));
+            border-color: rgba(255,143,202,.48);
+            box-shadow: 0 0 26px rgba(255,92,168,.16), inset 0 0 20px rgba(255,143,202,.10);
+            animation-delay: -.9s;
+        }
+        .fighter-name { color: #f5d9ff; font-weight: 900; }
+        .fighter-hp { width: min(100%, 140px); height: 8px; background: #080d1f; border-radius: 99px; overflow: hidden; }
+        .fighter-hp span { display: block; height: 100%; width: 100%; background: linear-gradient(90deg,#8dffcb,#5ee7ff); }
+        .fighter.cpu .fighter-hp span { background: linear-gradient(90deg,#ff8fca,#ff9f7a); }
+        .vs-mark { font-size: 1.25rem; font-weight: 1000; font-style: italic; color: #ffe7a8; text-shadow: 0 0 18px rgba(255,231,168,.5); }
+        @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        .battle-log {
+            position: relative;
+            z-index: 1;
+            margin-top: 14px;
+            color: #c9d5ff;
+            font-size: .82rem;
+            padding: 9px 12px;
+            border-radius: 12px;
+            background: rgba(4,8,24,.55);
+            border: 1px solid rgba(167,156,255,.12);
+        }
+        .typing-panel {
+            padding: 18px 14px;
+            border-radius: 20px;
+            background: linear-gradient(145deg, rgba(36,42,79,.78), rgba(11,17,39,.92));
+            border: 1px solid rgba(184,167,255,.22);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+        }
+        .typing-label {
+            color: #8ceaff;
+            letter-spacing: 3px;
+            font-size: .72rem;
+            font-weight: 900;
+        }
+        .word-display {
+            display: inline-block;
+            max-width: 100%;
+            padding: 14px 18px;
+            border-radius: 14px;
+            background: rgba(5,9,26,.7);
+            border: 1px solid rgba(140,234,255,.2);
+        }
+        .battle-tip { color: #9faedb; font-size: .78rem; margin: 8px 0 0; }
+        /* バトル演出：突進・被弾・必殺技・決着 */
+        .battle-fx-layer { position:absolute; inset:0; z-index:5; pointer-events:none; overflow:hidden; }
+        .fighter.player .fighter-avatar, .fighter.cpu .fighter-avatar { will-change: transform, filter; }
+        .fighter.player.attack-lunge .fighter-avatar { animation: playerLunge .42s ease-out !important; }
+        .fighter.cpu.attack-lunge .fighter-avatar { animation: cpuLunge .42s ease-out !important; }
+        .fighter.taking-hit .fighter-avatar { animation: hitShake .38s ease-in-out !important; filter: brightness(2) saturate(1.7); }
+        .battle-arena.screen-shake { animation: arenaShake .35s linear; }
+        .battle-arena.special-mode { box-shadow: inset 0 0 55px rgba(190,90,255,.48), 0 0 30px rgba(160,90,255,.3); }
+        .fx-banner { position:absolute; left:50%; top:42%; transform:translate(-50%,-50%) scale(.5); white-space:nowrap; font-weight:1000; font-size:clamp(1.15rem,4vw,2.2rem); letter-spacing:2px; color:#fff5b5; text-shadow:0 0 8px #fff,0 0 24px #a855f7,3px 4px 0 #5b21b6; opacity:0; }
+        .fx-banner.play { animation: bannerBurst .9s cubic-bezier(.16,.8,.2,1) forwards; }
+        .damage-pop { position:absolute; z-index:7; font-size:1.35rem; font-weight:1000; color:#ffe7a8; text-shadow:0 2px 0 #5b214e,0 0 15px #ff5ca8; animation: damageFloat .85s ease-out forwards; pointer-events:none; }
+        .damage-pop.special { color:#f4d7ff; font-size:1.8rem; text-shadow:0 0 8px #fff,0 0 22px #a855f7,0 3px 0 #4c1d95; }
+        .battle-arena.victory-mode { border-color:#ffe7a8; box-shadow:inset 0 0 65px rgba(255,210,92,.28),0 0 32px rgba(255,210,92,.3); }
+        .battle-arena.defeat-mode { filter:saturate(.6); box-shadow:inset 0 0 65px rgba(255,70,120,.22); }
+        .victory-spark { position:absolute; z-index:4; top:-24px; width:8px; height:12px; border-radius:2px; background:linear-gradient(#fff2a8,#ff7bd5); animation: confettiFall 1.7s ease-in forwards; }
+        @keyframes playerLunge { 0%{transform:translateX(0) scale(1)} 45%{transform:translateX(28px) scale(1.13) rotate(5deg)} 100%{transform:translateX(0) scale(1)} }
+        @keyframes cpuLunge { 0%{transform:translateX(0) scale(1)} 45%{transform:translateX(-28px) scale(1.13) rotate(-5deg)} 100%{transform:translateX(0) scale(1)} }
+        @keyframes hitShake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-9px) rotate(-5deg)} 40%{transform:translateX(8px) rotate(5deg)} 60%{transform:translateX(-6px)} 80%{transform:translateX(5px)} }
+        @keyframes arenaShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 50%{transform:translateX(4px)} 75%{transform:translateX(-2px)} }
+        @keyframes bannerBurst { 0%{opacity:0;transform:translate(-50%,-50%) scale(.35) rotate(-8deg)} 18%{opacity:1;transform:translate(-50%,-50%) scale(1.15) rotate(3deg)} 35%{transform:translate(-50%,-50%) scale(1) rotate(0)} 78%{opacity:1} 100%{opacity:0;transform:translate(-50%,-75%) scale(1.1)} }
+        @keyframes damageFloat { 0%{opacity:0;transform:translateY(10px) scale(.6)} 15%{opacity:1;transform:translateY(0) scale(1.2)} 100%{opacity:0;transform:translateY(-48px) scale(1)} }
+        @keyframes confettiFall { 0%{opacity:1;transform:translateY(0) rotate(0)} 100%{opacity:0;transform:translateY(240px) rotate(540deg)} }
+        @media (prefers-reduced-motion: reduce) { .fighter-avatar, .fx-banner, .damage-pop, .victory-spark, .battle-arena.screen-shake { animation-duration:.01ms !important; animation-iteration-count:1 !important; } }
+        @media (max-width: 600px) {
+            .battle-stage { min-height: 120px; }
+            .battle-arena { padding: 16px 10px 12px; }
+            .fighter-avatar { border-radius: 20px; }
+        }
+        .hero-banner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin: -2px 0 18px;
+            padding: 13px 16px;
+            border-radius: 18px;
+            background: linear-gradient(100deg, rgba(124,92,255,.18), rgba(255,143,202,.12));
+            border: 1px solid rgba(184,167,255,.16);
+        }
+        .mascot {
+            width: 66px;
+            height: 66px;
+            flex: 0 0 66px;
+            display: grid;
+            place-items: center;
+            font-size: 2.6rem;
+            border-radius: 20px;
+            background: linear-gradient(145deg, #29234f, #17243f);
+            border: 1px solid rgba(174,234,255,.35);
+            box-shadow: inset 0 0 18px rgba(124,92,255,.2), 0 5px 20px rgba(0,0,0,.2);
+        }
+        .hero-copy { text-align: left; }
+        .hero-copy strong { display: block; color: #f5d9ff; letter-spacing: 1px; }
+        .hero-copy span { color: #aeb9e9; font-size: .82rem; }
+        .cpu-avatar {
+            display: inline-grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            margin: 0 0 8px;
+            border-radius: 15px;
+            font-size: 1.8rem;
+            background: linear-gradient(145deg, #4a214c, #202b4c);
+            border: 1px solid rgba(255,143,202,.35);
+        }
+        .side-panel h2 { margin-bottom: 12px; }
+        @media (max-width: 760px) {
+            body { align-items: flex-start; }
+            .game-wrapper { flex-direction: column; padding: 14px; }
+            .side-panel { width: auto; }
+            .card { padding: 20px 16px; }
+            .word-display { font-size: clamp(1.25rem, 5vw, 2rem); overflow-wrap: anywhere; }
+            .status-val { font-size: 1.1rem; }
+        }
+
+        /* ステータス関連 */
+        .status-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            background: rgba(8, 13, 31, .62);
+            border: 1px solid rgba(164, 153, 255, .16);
+            padding: 12px 8px;
+            border-radius: 16px;
+        }
+
+        .status-val {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ff9bcf;
+            text-shadow: 0 0 14px rgba(255, 116, 190, .2);
+        }
+
+        /* ゲージ関連 */
+        .gauge-container {
+            width: 100%;
+            background-color: #080d1f;
+            border: 1px solid rgba(185, 174, 255, .15);
+            height: 18px;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .gauge-fill {
+            height: 100%;
+            transition: width 0.2s ease;
+        }
+
+        .exp-fill { background: linear-gradient(90deg, #7c5cff, #5ee7ff, #9fffc7); box-shadow: 0 0 14px rgba(94,231,255,.4); }
+        .cpu-fill { background: linear-gradient(90deg, #ff5ca8, #ff9f7a); box-shadow: 0 0 14px rgba(255,92,168,.3); }
+
+        .gauge-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        /* タイピング表示 */
+        .word-display {
+            font-size: 2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin: 20px 0;
+            min-height: 50px;
+        }
+
+        .typed { color: #585b70; }
+        .untyped { color: #b8a7ff;
+            text-shadow: 0 0 22px rgba(155, 130, 255, .25); text-decoration: underline; }
+
+        /* スキル一覧 */
+        .skill-list {
+            text-align: left;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .skill-item {
+            padding: 8px;
+            background: rgba(8, 13, 31, .58);
+            border: 1px solid rgba(167, 156, 255, .12);
+            border-radius: 12px;
+            padding: 11px;
+            opacity: 0.42;
+        }
+
+        .skill-item.active {
+            opacity: 1.0;
+            border-left: 4px solid #8dffcb;
+            background: linear-gradient(100deg, rgba(88, 235, 190, .15), rgba(124, 92, 255, .12));
+            box-shadow: 0 0 18px rgba(95, 255, 204, .08);
+        }
+
+        .btn {
+            background-color: #ff9bcf;
+            text-shadow: 0 0 14px rgba(255, 116, 190, .2);
+            color: #11111b;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(184,167,255,.25); }
+        .btn:disabled { background: #454a66; color: #9ca3c7; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .message {
+            height: 24px;
+            color: #ffe7a8;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 0 0 14px rgba(255, 231, 168, .18);
+        }
+        /* 常時アニメーション：戦闘中以外も世界が動いて見える演出 */
+        body {
+            background-size: 140% 140%, 140% 140%, auto;
+            animation: ambientBackground 22s ease-in-out infinite alternate;
+        }
+        .screen, .card, .side-panel {
+            animation: panelBreath 5.5s ease-in-out infinite;
+        }
+        .side-panel { animation-delay: -2s; }
+        .screen-kicker { animation: kickerGlow 3s ease-in-out infinite; }
+        .screen-title { animation: titleGlow 3.8s ease-in-out infinite; }
+        .title-mascot, .mascot, .character-art, .cpu-avatar {
+            transform-origin: 50% 60%;
+            animation: mascotFloat 3.4s ease-in-out infinite;
+        }
+        .character-card:nth-child(3n) .character-art { animation-delay: -.8s; }
+        .character-card:nth-child(3n + 1) .character-art { animation-delay: -1.6s; }
+        .character-card.admin-only .character-art { animation: adminArtifact 2.6s ease-in-out infinite; }
+        .hero-banner { background-size: 220% 220%; animation: bannerFlow 8s ease-in-out infinite; }
+        .btn:not(:disabled) { animation: buttonAura 3.6s ease-in-out infinite; }
+        .status-container { animation: statusPulse 4s ease-in-out infinite; }
+        .gauge-container { position: relative; overflow: hidden; }
+        .gauge-fill { position: relative; }
+        .gauge-fill::after, .fighter-hp span::after {
+            content: ""; position: absolute; inset: 0; pointer-events: none;
+            background: linear-gradient(110deg, transparent 15%, rgba(255,255,255,.55) 48%, transparent 75%);
+            background-size: 220% 100%; animation: gaugeShimmer 2.8s linear infinite;
+        }
+        .fighter-hp span { position: relative; overflow: hidden; }
+        .battle-arena:after {
+            content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+            background: repeating-linear-gradient(0deg, transparent 0 17px, rgba(140,234,255,.035) 18px 19px),
+                        linear-gradient(115deg, transparent 20%, rgba(140,234,255,.045) 50%, transparent 80%);
+            background-size: 100% 38px, 220% 100%;
+            animation: arenaScan 7s linear infinite;
+        }
+        .vs-mark { animation: vsPulse 1.8s ease-in-out infinite; }
+        .battle-log { animation: logGlow 4.5s ease-in-out infinite; }
+        .word-display { animation: wordPulse 2.4s ease-in-out infinite; }
+        .typing-label { animation: typingBlink 2.2s ease-in-out infinite; }
+        .skill-list > *, .side-panel > div { animation: sideFloat 5s ease-in-out infinite; }
+        .side-panel > div:nth-child(2) { animation-delay: -2.5s; }
+        @keyframes ambientBackground {
+            0% { background-position: 0% 0%, 100% 100%, center; }
+            100% { background-position: 35% 20%, 65% 70%, center; }
+        }
+        @keyframes panelBreath {
+            0%,100% { box-shadow: 0 18px 45px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.04); }
+            50% { box-shadow: 0 18px 48px rgba(92,75,190,.20), inset 0 1px 0 rgba(255,255,255,.08); }
+        }
+        @keyframes kickerGlow { 0%,100% { opacity:.78; text-shadow:0 0 5px rgba(140,234,255,.15); } 50% { opacity:1; text-shadow:0 0 14px rgba(140,234,255,.65); } }
+        @keyframes titleGlow { 0%,100% { filter:drop-shadow(0 0 3px rgba(168,85,247,.12)); } 50% { filter:drop-shadow(0 0 13px rgba(168,85,247,.48)); } }
+        @keyframes mascotFloat { 0%,100% { transform:translateY(0) rotate(-2deg); } 50% { transform:translateY(-7px) rotate(2deg); } }
+        @keyframes adminArtifact { 0%,100% { transform:translateY(0) scale(1); filter:drop-shadow(0 0 4px rgba(255,207,92,.25)); } 50% { transform:translateY(-8px) scale(1.045); filter:drop-shadow(0 0 16px rgba(255,207,92,.72)); } }
+        @keyframes bannerFlow { 0%,100% { background-position:0% 50%; } 50% { background-position:100% 50%; } }
+        @keyframes buttonAura { 0%,100% { box-shadow:0 0 0 rgba(140,234,255,0); } 50% { box-shadow:0 0 18px rgba(140,234,255,.14); } }
+        @keyframes statusPulse { 0%,100% { border-color:rgba(164,153,255,.16); } 50% { border-color:rgba(140,234,255,.38); } }
+        @keyframes gaugeShimmer { 0% { background-position:200% 0; } 100% { background-position:-220% 0; } }
+        @keyframes arenaScan { 0% { background-position:0 0, -110% 0; } 100% { background-position:0 38px, 110% 0; } }
+        @keyframes vsPulse { 0%,100% { transform:scale(1); text-shadow:0 0 10px rgba(255,231,168,.25); } 50% { transform:scale(1.13); text-shadow:0 0 22px rgba(255,231,168,.85); } }
+        @keyframes logGlow { 0%,100% { border-color:rgba(167,156,255,.12); } 50% { border-color:rgba(167,156,255,.35); } }
+        @keyframes wordPulse { 0%,100% { border-color:rgba(140,234,255,.2); box-shadow:0 0 0 rgba(140,234,255,0); } 50% { border-color:rgba(140,234,255,.48); box-shadow:0 0 16px rgba(140,234,255,.10); } }
+        @keyframes typingBlink { 0%,100% { opacity:1; } 50% { opacity:.72; } }
+        @keyframes sideFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-2px); } }
+        @media (prefers-reduced-motion: reduce) {
+            body, .screen, .card, .side-panel, .screen-kicker, .screen-title, .title-mascot, .mascot, .character-art, .cpu-avatar, .hero-banner, .btn:not(:disabled), .status-container, .gauge-fill::after, .fighter-hp span::after, .battle-arena:after, .vs-mark, .battle-log, .word-display, .typing-label, .side-panel > div {
+                animation: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<section id="title-screen" class="screen">
+    <div class="screen-kicker">PIXEL GUARDIANS PRESENTS</div>
+    <h1 class="screen-title">⚔ TYPING BATTLE ⚔</h1>
+    <p class="screen-subtitle">キミの相棒を選んで、タイピングバトルに挑もう！</p>
+    <div class="title-mascots" aria-label="ゲームキャラクター">
+        <div class="title-mascot">🦊</div>
+        <div class="title-mascot">🐉</div>
+        <div class="title-mascot">🤖</div>
+    </div>
+    <p class="screen-subtitle">スピードとコンボでCPUに勝利しよう。</p>
+    <div class="screen-actions">
+        <button class="btn" type="button" data-action="showCharacterSelect">ゲームスタート　▶</button>
+    </div>
+    <div class="admin-entry"><button id="admin-menu-button" class="btn secondary" style="max-width:240px;" type="button">⚙ 管理者メニュー</button></div>
+</section>
+
+<section id="admin-screen" class="screen admin-panel" style="display:none; max-width:620px;">
+    <div class="screen-kicker">ADMIN CONTROL</div>
+    <h1 class="screen-title" style="font-size:2.3rem;">管理者パネル</h1>
+    <p class="screen-subtitle">ゲームの難易度とバトル設定を変更できます。</p>
+    <div id="admin-login-area">
+        <label for="admin-code">管理者コード</label>
+        <input id="admin-code" type="text" autocomplete="off" placeholder="1つ、または複数のコードを入力（複数はカンマ区切り）">
+        <p class="admin-note">複数のコードを同時に認証する場合は、カンマまたは改行で区切って入力してください。</p>
+        <p id="admin-login-error" class="admin-status" style="color:#ff9bcf;"></p>
+        <button class="btn" type="button" data-action="loginAdmin">認証する</button>
+    </div>
+    <div id="admin-controls" style="display:none;">
+        <p class="admin-status">✓ 管理者としてログイン中</p>
+        <div class="admin-note" style="border:1px solid rgba(255,207,92,.4); border-radius:12px; padding:12px; margin:12px 0;">🔓 管理者限定キャラ3体を解放：ゼロ・エクリプス（HP500・攻撃3倍・被ダメージ半減）、紅蓮キツネ・カグラ（HP350・攻撃2倍・被ダメージ25%軽減）、ヴォイド・ガルム（HP400・攻撃2.5倍・被ダメージ35%軽減）。一度認証すると、ログアウト後もこのページを閉じるまでは使用できます。</div>
+        <label for="setting-time">バトル時間（秒）</label>
+        <input id="setting-time" type="number" min="10" max="180" value="30">
+        <label for="setting-hp">開始時HP（プレイヤー・CPU共通）</label>
+        <input id="setting-hp" type="number" min="20" max="300" value="100">
+        <label for="setting-cpu-speed">CPUのタイピング速度</label>
+        <select id="setting-cpu-speed"><option value="650">ゆっくり</option><option value="400" selected>ふつう</option><option value="250">はやい</option><option value="150">とてもはやい</option></select>
+        <p class="admin-note">設定はこのブラウザ内でのみ有効です。ページを閉じると初期設定に戻ります。</p>
+        <button class="btn" type="button" data-action="saveAdminSettings">設定を保存</button>
+        <button class="btn secondary" style="margin-top:10px;" type="button" data-action="logoutAdmin">ログアウト</button>
+    </div>
+    <div class="screen-actions"><button class="btn secondary" type="button" data-action="showTitleScreen">◀ タイトルへ戻る</button></div>
+</section>
+
+<section id="character-screen" class="screen" style="display:none;">
+    <div class="screen-kicker">CHOOSE YOUR PARTNER</div>
+    <h1 class="screen-title">キャラクター選択</h1>
+    <p class="screen-subtitle">一緒に戦うお気に入りの相棒を選ぼう！</p>
+    <div class="character-grid">
+        <button type="button" class="character-card selected" data-emoji="🦊" data-name="ルナ" data-action="chooseCharacter">
+            <span class="character-art">🦊</span>
+            <span><span class="character-name">ルナ / LUNA</span><span class="character-desc">星の力を宿す、すばやいキツネ</span></span>
+        </button>
+        <button type="button" class="character-card" data-emoji="🐉" data-name="ノヴァ" data-action="chooseCharacter">
+            <span class="character-art">🐉</span>
+            <span><span class="character-name">ノヴァ / NOVA</span><span class="character-desc">炎と光を操る、勇敢なドラゴン</span></span>
+        </button>
+        <button type="button" class="character-card" data-emoji="🐱" data-name="ミント" data-action="chooseCharacter">
+            <span class="character-art">🐱</span>
+            <span><span class="character-name">ミント / MINT</span><span class="character-desc">ひらめきが得意な、魔法のネコ</span></span>
+        </button>
+        <button type="button" class="character-card" data-emoji="🐺" data-name="ガルム" data-action="chooseCharacter">
+            <span class="character-art">🐺</span>
+            <span><span class="character-name">ガルム / GARM</span><span class="character-desc">鋭い牙を持つ、森の守護者</span></span>
+        </button>
+        <button type="button" class="character-card" data-emoji="🦄" data-name="ルミナ" data-action="chooseCharacter">
+            <span class="character-art">🦄</span>
+            <span><span class="character-name">ルミナ / LUMINA</span><span class="character-desc">虹色の魔法を操るユニコーン</span></span>
+        </button>
+        <button type="button" class="character-card" data-emoji="🐼" data-name="パン太" data-action="chooseCharacter">
+            <span class="character-art">🐼</span>
+            <span><span class="character-name">パン太 / PANTA</span><span class="character-desc">のんびり見えて、実は力持ち</span></span>
+        </button>
+        <button type="button" class="character-card" data-emoji="🦉" data-name="オルビット" data-action="chooseCharacter">
+            <span class="character-art">🦉</span>
+            <span><span class="character-name">オルビット / ORBIT</span><span class="character-desc">知恵と星読みのフクロウ</span></span>
+        </button>
+        <button type="button" class="character-card" data-emoji="🐸" data-name="ケロル" data-action="chooseCharacter">
+            <span class="character-art">🐸</span>
+            <span><span class="character-name">ケロル / KEROL</span><span class="character-desc">水しぶきで戦う元気なカエル</span></span>
+        </button>
+        <button type="button" class="character-card" data-emoji="🐙" data-name="タコスケ" data-action="chooseCharacter">
+            <span class="character-art">🐙</span>
+            <span><span class="character-name">タコスケ / TAKOSUKE</span><span class="character-desc">8本の手で素早く攻める海の戦士</span></span>
+        </button>
+        <button type="button" class="character-card" data-emoji="🐧" data-name="ペンギン" data-action="chooseCharacter">
+            <span class="character-art">🐧</span>
+            <span><span class="character-name">ペンギン / PENGUIN</span><span class="character-desc">氷のフィールドを駆ける冒険家</span></span>
+        </button>
+        <button id="admin-only-character" type="button" class="character-card admin-only" data-emoji="👑" data-name="ゼロ・エクリプス" data-action="chooseCharacter" style="display:none;">
+            <span class="character-art">👑</span>
+            <span><span class="character-name">ゼロ・エクリプス / ZERO ECLIPSE</span><span class="character-desc">HP500・攻撃3倍・被ダメージ半減の最強王者</span><span class="admin-character-tag">🔒 ADMIN ONLY</span></span>
+        </button>
+        <button id="admin-fox-character" type="button" class="character-card admin-only" data-emoji="🦊" data-name="紅蓮キツネ・カグラ" data-action="chooseCharacter" style="display:none;">
+            <span class="character-art">🦊</span>
+            <span><span class="character-name">紅蓮キツネ・カグラ / GUREN KAGURA</span><span class="character-desc">HP350・攻撃2倍・被ダメージ25%軽減。紅蓮の狐火で敵を焼き尽くす。</span><span class="admin-character-tag">🔒 ADMIN ONLY</span></span>
+        </button>
+        <button id="admin-wolf-character" type="button" class="character-card admin-only" data-emoji="🐺" data-name="ヴォイド・ガルム" data-action="chooseCharacter" style="display:none;">
+            <span class="character-art">🐺</span>
+            <span><span class="character-name">ヴォイド・ガルム / VOID GARM</span><span class="character-desc">HP400・攻撃2.5倍・被ダメージ35%軽減。虚空の爪で強烈な一撃を放つ。</span><span class="admin-character-tag">🔒 ADMIN ONLY</span></span>
+        </button>
+    </div>
+    <p id="selected-character-label" class="screen-subtitle" style="margin-top:20px; margin-bottom:0;">選択中：ルナ</p>
+    <div class="screen-actions">
+        <button class="btn secondary" type="button" data-action="showTitleScreen">◀ もどる</button>
+        <button class="btn" type="button" data-action="beginSelectedGame">このキャラでバトル！　⚔</button>
+    </div>
+</section>
+
+<div id="game-wrapper" class="game-wrapper">
+    <!-- プレイヤーエリア -->
+    <div class="card">
+        <h1>TYPING BATTLE</h1>
+        
+        <div class="status-container">
+            <div>Lv<br><span id="level" class="status-val">1</span></div>
+            <div>Score<br><span id="score" class="status-val">0</span></div>
+            <div>Time<br><span id="time" class="status-val">30</span>s</div>
+            <div>Combo<br><span id="combo" class="status-val">0</span></div>
+        </div>
+
+        <div class="gauge-container">
+            <div id="exp-bar" class="gauge-fill exp-fill" style="width: 0%;"></div>
+            <div id="exp-text" class="gauge-text">EXP: 0 / 5</div>
+        </div>
+
+        <div class="battle-arena" id="battle-arena">
+            <div class="battle-fx-layer" id="battle-fx-layer" aria-hidden="true"><div id="fx-banner" class="fx-banner"></div></div>
+            <div class="arena-topline"><span>✦ BATTLE FIELD</span><span>ROUND 01</span></div>
+            <div class="battle-stage">
+                <div class="fighter player">
+                    <div id="battle-player-avatar" class="fighter-avatar">🦊</div>
+                    <div id="battle-player-name" class="fighter-name">LUNA</div>
+                    <div class="fighter-hp"><span id="player-hp-fill"></span></div>
+                </div>
+                <div class="vs-mark">VS</div>
+                <div class="fighter cpu">
+                    <div class="fighter-avatar">🤖</div>
+                    <div class="fighter-name">CPU BOT</div>
+                    <div class="fighter-hp"><span id="cpu-hp-fill"></span></div>
+                </div>
+            </div>
+            <div id="battle-log" class="battle-log">⚡ 相手を見定めよう。準備ができたらバトル開始！</div>
+        </div>
+
+        <div class="typing-panel">
+            <div class="typing-label">⌨ TYPE TO ATTACK</div>
+            <div class="word-display">
+                <span id="typed" class="typed"></span><span id="untyped" class="untyped">PRESS START</span>
+            </div>
+            <p class="battle-tip">表示された英単語を正確に入力して攻撃しよう！</p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <button id="start-btn" class="btn" data-action="startGame">⚔ バトル開始</button>
+        <button class="btn secondary" style="margin-top:10px;" data-action="returnToCharacterSelect">キャラクター選択へ</button>
+    </div>
+
+    <!-- 対戦相手＆スキルエリア -->
+    <div class="side-panel">
+        <div>
+            <h2>💜 VS CPU</h2>
+            <div class="cpu-avatar" aria-label="CPUキャラクター">🤖</div>
+            <div style="font-size:0.9rem; margin-bottom: 5px;">CPU Score: <span id="cpu-score" style="color:#fab387; font-weight:bold;">0</span></div>
+            <div class="gauge-container">
+                <div id="cpu-bar" class="gauge-fill cpu-fill" style="width: 0%;"></div>
+                <div id="cpu-word-text" class="gauge-text">Standby</div>
+            </div>
+        </div>
+
+        <div>
+            <h2>✨ PASSIVE SKILLS</h2>
+            <div class="skill-list">
+                <div id="skill-1" class="skill-item">
+                    <strong>Lv.2: コンボガード</strong><br>ミスしてもコンボがリセットされない
+                </div>
+                <div id="skill-2" class="skill-item">
+                    <strong>Lv.4: タイムブースト</strong><br>単語完成時に残り時間+1秒
+                </div>
+                <div id="skill-3" class="skill-item">
+                    <strong>Lv.6: 覚醒</strong><br>スコアと獲得EXPが2倍
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedCharacter = { emoji: "🦊", name: "ルナ" };
+    // 単一HTML版の簡易管理者機能。公開サイトの強固な認証にはサーバー側実装が必要。
+    // どれか1つのコードで管理者ログインできます。
+    const ADMIN_CODES = [
+        "PIXEL-ADMIN-7264",
+        "PIXEL-ADMIN-8391",
+        "PIXEL-ADMIN-2048",
+        "PIXEL-ADMIN-5550",
+        "PIXEL-ADMIN-9999"
+    ];
+    let isAdmin = false;
+    // 一度管理者認証すると、このページを開いている間はゼロ・エクリプスを使用可能。ログアウトしても使用権は失われません。
+    let zeroEclipseUnlocked = false;
+    let playerMaxHp = 100;
+    let gameSettings = { duration: 30, hp: 100, cpuInterval: 400 };
+
+    function hideAllScreens() {
+        ["title-screen", "character-screen", "admin-screen"].forEach(id => {
+            document.getElementById(id).style.display = "none";
+        });
+        document.getElementById("game-wrapper").style.display = "none";
+    }
+
+    function openAdminLogin() {
+        hideAllScreens();
+        document.getElementById("admin-screen").style.display = "block";
+        document.getElementById("admin-login-area").style.display = isAdmin ? "none" : "block";
+        document.getElementById("admin-controls").style.display = isAdmin ? "block" : "none";
+        document.getElementById("admin-login-error").textContent = "";
+        if (isAdmin) fillAdminSettings();
+    }
+
+    function loginAdmin() {
+        const entered = document.getElementById("admin-code").value;
+        // 1つのコードでも、複数のコードを同時に入力しても認証可能。
+        // 複数入力時は、入力されたコードがすべて有効な場合にログインする。
+        const submittedCodes = entered
+            .split(/[,，;；\n\r]+/)
+            .map(code => code.trim())
+            .filter(Boolean);
+        const allCodesValid = submittedCodes.length > 0 &&
+            submittedCodes.every(code => ADMIN_CODES.includes(code));
+        if (!allCodesValid) {
+            document.getElementById("admin-login-error").textContent = "コードが違うか、入力形式が正しくありません。1つのコード、または有効なコードをカンマ区切りで入力してください。";
+            return;
+        }
+        isAdmin = true;
+        zeroEclipseUnlocked = true;
+        updateAdminCharacterAccess();
+        document.getElementById("admin-code").value = "";
+        document.getElementById("admin-login-area").style.display = "none";
+        document.getElementById("admin-controls").style.display = "block";
+        fillAdminSettings();
+    }
+
+    function fillAdminSettings() {
+        document.getElementById("setting-time").value = gameSettings.duration;
+        document.getElementById("setting-hp").value = gameSettings.hp;
+        document.getElementById("setting-cpu-speed").value = String(gameSettings.cpuInterval);
+    }
+
+    function saveAdminSettings() {
+        if (!isAdmin) return;
+        const duration = Number(document.getElementById("setting-time").value);
+        const hp = Number(document.getElementById("setting-hp").value);
+        const cpuInterval = Number(document.getElementById("setting-cpu-speed").value);
+        if (!Number.isFinite(duration) || duration < 10 || duration > 180 || !Number.isFinite(hp) || hp < 20 || hp > 300 || ![650, 400, 250, 150].includes(cpuInterval)) {
+            alert("時間は10〜180秒、HPは20〜300の範囲で入力してください。");
+            return;
+        }
+        gameSettings = { duration, hp, cpuInterval };
+        alert("管理者設定を保存しました。次のバトルから反映されます。");
+    }
+
+    function updateAdminCharacterAccess() {
+        // 認証済みページではログアウト後も3体すべての解放状態を維持する。
+        ["admin-only-character", "admin-fox-character", "admin-wolf-character"].forEach(id => {
+            const card = document.getElementById(id);
+            if (card) card.style.display = zeroEclipseUnlocked ? "flex" : "none";
+        });
+    }
+
+    function getCharacterStats(name) {
+        const stats = {
+            "ゼロ・エクリプス": { hp: 500, attack: 3, damageTaken: 0.5 },
+            "紅蓮キツネ・カグラ": { hp: 350, attack: 2, damageTaken: 0.75 },
+            "ヴォイド・ガルム": { hp: 400, attack: 2.5, damageTaken: 0.65 }
+        };
+        return stats[name] || { hp: gameSettings.hp, attack: 1, damageTaken: 1 };
+    }
+
+    function logoutAdmin() {
+        isAdmin = false;
+        updateAdminCharacterAccess();
+        openAdminLogin();
+    }
+
+    function showTitleScreen() {
+        hideAllScreens();
+        document.getElementById("title-screen").style.display = "block";
+    }
+
+    function showCharacterSelect() {
+        hideAllScreens();
+        updateAdminCharacterAccess();
+        document.getElementById("character-screen").style.display = "block";
+    }
+
+    function returnToCharacterSelect() {
+        clearInterval(gameTimer);
+        clearInterval(cpuTimer);
+        isPlaying = false;
+        const start = document.getElementById("start-btn");
+        if (start) start.disabled = false;
+        showCharacterSelect();
+    }
+
+    function chooseCharacter(card) {
+        document.querySelectorAll(".character-card").forEach(el => el.classList.remove("selected"));
+        card.classList.add("selected");
+        selectedCharacter = { emoji: card.dataset.emoji, name: card.dataset.name };
+        document.getElementById("selected-character-label").textContent = "選択中：" + selectedCharacter.name;
+    }
+
+    function beginSelectedGame() {
+        document.getElementById("title-screen").style.display = "none";
+        document.getElementById("character-screen").style.display = "none";
+        document.getElementById("game-wrapper").style.display = "flex";
+        document.getElementById("battle-player-avatar").textContent = selectedCharacter.emoji;
+        document.getElementById("battle-player-name").textContent = selectedCharacter.name.toUpperCase();
+        document.getElementById("battle-log").textContent = "⚡ " + selectedCharacter.name + "、バトル開始！英単語を入力して攻撃しよう！";
+        startGame();
+    }
+
+    // 拡張された単語リスト（日常会話・常識・トレンド・ポップカルチャーなど）
+    const words = [
+        // 日常・生活
+        "coffee", "curry", "sushi", "ramen", "shopping",
+        "travel", "weekend", "morning", "holiday", "kitchen",
+        "station", "airport", "hospital", "school", "music",
+
+        // トレンド・Web・IT
+        "influencer", "trending", "hashtag", "vlog", "streaming",
+        "metaverse", "algorithm", "wireless", "shortcut", "download",
+        "cloud", "smart", "network", "virtual", "ai",
+
+        // エンタメ・カルチャー
+        "anime", "manga", "vtuber", "cosplay", "festival",
+        "idol", "concert", "cinema", "fashion", "fandom",
+
+        // ゲーム・ファンタジー
+        "gacha", "esports", "avatar", "dungeon", "warrior",
+        "dragon", "wizard", "shadow", "victory", "potion"
+    ];
+
+    // プレイヤー状態
+    let level = 1;
+    let score = 0;
+    let exp = 0;
+    let nextLevelExp = 5;
+    let combo = 0;
+    let currentWord = "";
+    let typedIndex = 0;
+
+    // CPU状態
+    let cpuScore = 0;
+    let playerHp = 100;
+    let cpuHp = 100;
+    let cpuWord = "";
+    let cpuTypedIndex = 0;
+    let cpuTimer = null;
+    let completedWords = 0;
+    let fxBannerTimer = null;
+
+    // ゲーム全体状態
+    let timeLeft = 30;
+    let gameTimer = null;
+    let isPlaying = false;
+
+    // パッシブスキルフラグ
+    let skills = {
+        comboGuard: false,
+        timeBoost: false,
+        awakening: false
+    };
+
+    // UI要素
+    const typedEl = document.getElementById("typed");
+    const untypedEl = document.getElementById("untyped");
+    const levelEl = document.getElementById("level");
+    const scoreEl = document.getElementById("score");
+    const timeEl = document.getElementById("time");
+    const comboEl = document.getElementById("combo");
+    const expBarEl = document.getElementById("exp-bar");
+    const expTextEl = document.getElementById("exp-text");
+    const cpuScoreEl = document.getElementById("cpu-score");
+    const cpuBarEl = document.getElementById("cpu-bar");
+    const cpuWordTextEl = document.getElementById("cpu-word-text");
+    const messageEl = document.getElementById("message");
+    const startBtn = document.getElementById("start-btn");
+
+    function playCombatAnimation(type, damage = 0, special = false) {
+        const arena = document.getElementById("battle-arena");
+        if (!arena) return;
+        if (type === "victory" || type === "defeat") {
+            const resultBanner = document.getElementById("fx-banner");
+            if (resultBanner) {
+                clearTimeout(fxBannerTimer);
+                resultBanner.classList.remove("play");
+                resultBanner.textContent = type === "victory" ? "VICTORY! ✨" : "DEFEAT…";
+                void resultBanner.offsetWidth;
+                resultBanner.classList.add("play");
+                fxBannerTimer = setTimeout(() => resultBanner.classList.remove("play"), 1000);
+            }
+            return;
+        }
+        const playerFighter = document.querySelector(".fighter.player");
+        const cpuFighter = document.querySelector(".fighter.cpu");
+        const target = type === "player" ? cpuFighter : playerFighter;
+        const attacker = type === "player" ? playerFighter : cpuFighter;
+        if (!arena || !attacker || !target) return;
+        attacker.classList.remove("attack-lunge");
+        target.classList.remove("taking-hit");
+        arena.classList.remove("screen-shake");
+        void arena.offsetWidth;
+        attacker.classList.add("attack-lunge");
+        target.classList.add("taking-hit");
+        arena.classList.add("screen-shake");
+        setTimeout(() => { attacker.classList.remove("attack-lunge"); target.classList.remove("taking-hit"); arena.classList.remove("screen-shake"); }, 480);
+
+        const avatarRect = target.querySelector(".fighter-avatar").getBoundingClientRect();
+        const arenaRect = arena.getBoundingClientRect();
+        const pop = document.createElement("div");
+        pop.className = "damage-pop" + (special ? " special" : "");
+        pop.textContent = (special ? "必殺! " : "-") + damage;
+        pop.style.left = (avatarRect.left - arenaRect.left + avatarRect.width / 2) + "px";
+        pop.style.top = (avatarRect.top - arenaRect.top + 8) + "px";
+        arena.appendChild(pop);
+        setTimeout(() => pop.remove(), 900);
+
+        const banner = document.getElementById("fx-banner");
+        if (banner && (special || type === "victory" || type === "defeat")) {
+            clearTimeout(fxBannerTimer);
+            banner.classList.remove("play");
+            banner.textContent = type === "victory" ? "VICTORY! ✨" : type === "defeat" ? "DEFEAT…" : (selectedCharacter.name + "・必殺技!!");
+            void banner.offsetWidth;
+            banner.classList.add("play");
+            fxBannerTimer = setTimeout(() => banner.classList.remove("play"), 1000);
+        }
+        if (special) {
+            arena.classList.add("special-mode");
+            setTimeout(() => arena.classList.remove("special-mode"), 1000);
+        }
+    }
+
+    function playVictoryCelebration() {
+        const arena = document.getElementById("battle-arena");
+        if (!arena) return;
+        arena.classList.remove("defeat-mode");
+        arena.classList.add("victory-mode");
+        playCombatAnimation("victory");
+        const layer = document.getElementById("battle-fx-layer");
+        for (let i = 0; i < 26; i++) {
+            const spark = document.createElement("span");
+            spark.className = "victory-spark";
+            spark.style.left = (Math.random() * 100) + "%";
+            spark.style.animationDelay = (Math.random() * .45) + "s";
+            spark.style.transform = `rotate(${Math.random() * 180}deg)`;
+            layer.appendChild(spark);
+            setTimeout(() => spark.remove(), 2300);
+        }
+    }
+
+    function startGame() {
+        // 初期化
+        level = 1;
+        score = 0;
+        exp = 0;
+        nextLevelExp = 5;
+        combo = 0;
+        timeLeft = gameSettings.duration;
+        timeEl.textContent = timeLeft;
+        cpuScore = 0;
+        completedWords = 0;
+        const arena = document.getElementById("battle-arena");
+        if (arena) arena.classList.remove("victory-mode", "defeat-mode", "special-mode", "screen-shake");
+        document.querySelectorAll(".victory-spark, .damage-pop").forEach(el => el.remove());
+        const fxBanner = document.getElementById("fx-banner");
+        if (fxBanner) { fxBanner.classList.remove("play"); fxBanner.textContent = ""; }
+        playerMaxHp = getCharacterStats(selectedCharacter.name).hp;
+        playerHp = playerMaxHp;
+        cpuHp = gameSettings.hp;
+        isPlaying = true;
+
+        skills = { comboGuard: false, timeBoost: false, awakening: false };
+        updateSkillUI();
+
+        updateStatus();
+        updateHealthUI();
+        document.getElementById("battle-log").textContent = "⚔ バトル開始！単語を完成させて相手にダメージ！";
+        messageEl.textContent = "";
+        startBtn.disabled = true;
+
+        nextWord();
+        nextCpuWord();
+
+        // メインタイマー開始
+        clearInterval(gameTimer);
+        gameTimer = setInterval(() => {
+            timeLeft--;
+            timeEl.textContent = timeLeft;
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }, 1000);
+
+        // CPUの動作ループ
+        clearInterval(cpuTimer);
+        cpuTimer = setInterval(processCpuTyping, gameSettings.cpuInterval);
+    }
+
+    // プレイヤーの単語更新
+    function nextWord() {
+        currentWord = words[Math.floor(Math.random() * words.length)];
+        typedIndex = 0;
+        updateWordDisplay();
+    }
+
+    function updateWordDisplay() {
+        typedEl.textContent = currentWord.substring(0, typedIndex);
+        untypedEl.textContent = currentWord.substring(typedIndex);
+    }
+
+    // CPUの処理
+    function nextCpuWord() {
+        cpuWord = words[Math.floor(Math.random() * words.length)];
+        cpuTypedIndex = 0;
+        updateCpuUI();
+    }
+
+    function processCpuTyping() {
+        if (!isPlaying) return;
+
+        cpuTypedIndex++;
+        if (cpuTypedIndex >= cpuWord.length) {
+            cpuScore += cpuWord.length * 12;
+            // CPUが単語を完成させるとプレイヤーにダメージ
+            const baseDamage = Math.max(8, Math.min(18, cpuWord.length * 2)) * (gameSettings.hp / 100);
+            const damage = Math.max(1, Math.round(baseDamage * getCharacterStats(selectedCharacter.name).damageTaken));
+            playerHp = Math.max(0, playerHp - damage);
+            updateHealthUI();
+            playCombatAnimation("cpu", damage, false);
+            document.getElementById("battle-log").textContent = `🤖 CPUの攻撃！ ${damage} ダメージ！`;
+            updateCpuUI();
+            if (playerHp <= 0) {
+                endGame("cpu");
+                return;
+            }
+            nextCpuWord();
+        } else {
+            updateCpuUI();
+        }
+    }
+
+    function updateCpuUI() {
+        cpuScoreEl.textContent = cpuScore;
+        const progress = (cpuTypedIndex / cpuWord.length) * 100;
+        cpuBarEl.style.width = progress + "%";
+        cpuWordTextEl.textContent = `${cpuWord} (${cpuTypedIndex}/${cpuWord.length})`;
+    }
+
+    function updateHealthUI() {
+        const playerFill = document.getElementById("player-hp-fill");
+        const cpuFill = document.getElementById("cpu-hp-fill");
+        const maxHp = playerMaxHp || gameSettings.hp;
+        if (playerFill) playerFill.style.width = Math.max(0, Math.min(100, playerHp / maxHp * 100)) + "%";
+        if (cpuFill) cpuFill.style.width = Math.max(0, Math.min(100, cpuHp / gameSettings.hp * 100)) + "%";
+        const playerFighter = document.querySelector(".fighter.player");
+        const cpuFighter = document.querySelector(".fighter.cpu");
+        if (playerFighter) playerFighter.setAttribute("aria-label", `プレイヤーHP ${playerHp}%`);
+        if (cpuFighter) cpuFighter.setAttribute("aria-label", `CPU HP ${cpuHp}%`);
+    }
+
+    // 経験値・レベル処理
+    function addExp(amount) {
+        if (skills.awakening) amount *= 2;
+
+        exp += amount;
+        if (exp >= nextLevelExp) {
+            level++;
+            exp -= nextLevelExp;
+            nextLevelExp = Math.floor(nextLevelExp * 1.5);
+            timeLeft += 3;
+            messageEl.textContent = "★ LEVEL UP! (+3秒) ★";
+            setTimeout(() => { messageEl.textContent = ""; }, 1500);
+
+            checkSkillUnlocks();
+        }
+        updateStatus();
+    }
+
+    // スキル解放のチェック
+    function checkSkillUnlocks() {
+        if (level >= 2 && !skills.comboGuard) {
+            skills.comboGuard = true;
+            messageEl.textContent = "SKILL: [コンボガード] 解放！";
+        }
+        if (level >= 4 && !skills.timeBoost) {
+            skills.timeBoost = true;
+            messageEl.textContent = "SKILL: [タイムブースト] 解放！";
+        }
+        if (level >= 6 && !skills.awakening) {
+            skills.awakening = true;
+            messageEl.textContent = "SKILL: [覚醒] 解放！";
+        }
+        updateSkillUI();
+    }
+
+    function updateSkillUI() {
+        document.getElementById("skill-1").classList.toggle("active", skills.comboGuard);
+        document.getElementById("skill-2").classList.toggle("active", skills.timeBoost);
+        document.getElementById("skill-3").classList.toggle("active", skills.awakening);
+    }
+
+    function updateStatus() {
+        levelEl.textContent = level;
+        scoreEl.textContent = score;
+        comboEl.textContent = combo;
+
+        const expPercentage = Math.min((exp / nextLevelExp) * 100, 100);
+        expBarEl.style.width = expPercentage + "%";
+        expTextEl.textContent = `EXP: ${exp} / ${nextLevelExp}`;
+    }
+
+    // キー入力判定
+    window.addEventListener("keydown", (e) => {
+        if (!isPlaying) return;
+
+        if (e.key === currentWord[typedIndex]) {
+            typedIndex++;
+            combo++;
+
+            let scoreMultiplier = skills.awakening ? 2 : 1;
+            score += (10 * level) * scoreMultiplier;
+            const battleLog = document.getElementById("battle-log");
+            if (battleLog && typedIndex === currentWord.length - 1) battleLog.textContent = "✨ コンボ攻撃！あと少しでスキルが発動するかも！";
+
+            const gainedExp = 1 + Math.floor(combo / 10);
+            addExp(gainedExp);
+
+            updateWordDisplay();
+
+            if (typedIndex === currentWord.length) {
+                if (skills.timeBoost) {
+                    timeLeft += 1;
+                    timeEl.textContent = timeLeft;
+                }
+                completedWords++;
+                const special = completedWords % 5 === 0;
+                const baseDamage = Math.max(10, Math.min(22, currentWord.length * 2)) * (gameSettings.hp / 100);
+                const damage = Math.round(baseDamage * getCharacterStats(selectedCharacter.name).attack * (special ? 1.8 : 1));
+                cpuHp = Math.max(0, cpuHp - damage);
+                updateHealthUI();
+                playCombatAnimation("player", damage, special);
+                const battleLog = document.getElementById("battle-log");
+                if (battleLog) battleLog.textContent = special ? `🌟 必殺技発動！ ${selectedCharacter.name} が ${damage} ダメージ！` : `💥 HIT! ${selectedCharacter.name} の攻撃！ CPUに ${damage} ダメージ！`;
+                if (cpuHp <= 0) {
+                    endGame("player");
+                    return;
+                }
+                nextWord();
+            }
+        } else {
+            if (e.key.length === 1) {
+                if (!skills.comboGuard) {
+                    combo = 0;
+                }
+                updateStatus();
+            }
+        }
+    });
+
+    // HPが0になったら決着。制限時間終了時はHP、次にスコアで判定。
+    function endGame(forcedWinner = null) {
+        if (!isPlaying) return;
+        clearInterval(gameTimer);
+        clearInterval(cpuTimer);
+        isPlaying = false;
+        startBtn.disabled = false;
+        typedEl.textContent = "";
+
+        let winner = forcedWinner;
+        if (!winner) {
+            if (cpuHp < playerHp) winner = "player";
+            else if (playerHp < cpuHp) winner = "cpu";
+            else if (score > cpuScore) winner = "player";
+            else if (score < cpuScore) winner = "cpu";
+            else winner = "draw";
+        }
+
+        const arena = document.getElementById("battle-arena");
+        if (arena) arena.classList.remove("victory-mode", "defeat-mode");
+        if (winner === "player") {
+            playVictoryCelebration();
+        } else if (winner === "cpu") {
+            if (arena) arena.classList.add("defeat-mode");
+            playCombatAnimation("defeat");
+        } else {
+            playCombatAnimation("defeat");
+        }
+        const resultText = winner === "player" ? "YOU WIN! 🏆" : winner === "cpu" ? "YOU LOSE... 🤖" : "DRAW GAME 🤝";
+        untypedEl.textContent = resultText;
+        if (winner === "player") {
+            messageEl.textContent = `🏆 勝利！ ${selectedCharacter.name} の勝ち！ スコア ${score} - ${cpuScore}`;
+            document.getElementById("battle-log").textContent = "🎉 おめでとう！相手を倒した！";
+        } else if (winner === "cpu") {
+            messageEl.textContent = `💫 敗北… CPUの勝ち！ スコア ${score} - ${cpuScore}`;
+            document.getElementById("battle-log").textContent = "🤖 CPUの勝利！もう一度挑戦しよう！";
+        } else {
+            messageEl.textContent = `🤝 引き分け！ スコア ${score} - ${cpuScore}`;
+            document.getElementById("battle-log").textContent = "互角の勝負！もう一度バトルしよう！";
+        }
+    }
+
+
+    // Centralized click handling: keeps buttons working consistently across browsers/previews.
+    document.addEventListener("click", function (event) {
+        const control = event.target.closest("[data-action]");
+        if (!control) return;
+        const action = control.dataset.action;
+        try {
+            switch (action) {
+                case "showCharacterSelect": showCharacterSelect(); break;
+                case "openAdminLogin": openAdminLogin(); break;
+                case "loginAdmin": loginAdmin(); break;
+                case "showTitleScreen": showTitleScreen(); break;
+                case "saveAdminSettings": saveAdminSettings(); break;
+                case "logoutAdmin": logoutAdmin(); break;
+                case "beginSelectedGame": beginSelectedGame(); break;
+                case "returnToCharacterSelect": returnToCharacterSelect(); break;
+                case "startGame": startGame(); break;
+                case "chooseCharacter": chooseCharacter(control); break;
+            }
+        } catch (error) {
+            console.error("Game action failed:", error);
+            const message = document.getElementById("message");
+            if (message) message.textContent = "動作エラーが発生しました。ページを再読み込みしてください。";
+            else alert("画面の切り替えに失敗しました。ページを再読み込みしてください。");
+        }
+    });
+
+    // Direct listeners for critical navigation controls (robust across browser previews).
+    const adminMenuButton = document.getElementById("admin-menu-button");
+    if (adminMenuButton) {
+        adminMenuButton.addEventListener("click", function (event) {
+            event.preventDefault();
+            openAdminLogin();
+        });
+    }
+
+    // Ensure the title screen is the initial visible screen.
+    function initializeGameScreens() {
+        hideAllScreens();
+        document.getElementById("title-screen").style.display = "block";
+    }
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initializeGameScreens, { once: true });
+    } else {
+        initializeGameScreens();
+    }
+
+</script>
+
+</body>
+</html>
